@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="TableMonitor">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="17" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="15" left="15" bottom="15" right="15"/>
+    <constraints>
+      <xy x="20" y="20" width="1291" height="668"/>
+    </constraints>
+    <properties>
+      <maximumSize width="419" height="188"/>
+      <minimumSize width="322" height="513"/>
+      <preferredSize width="550" height="513"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <grid id="da5ff" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="3" column="0" row-span="13" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="-1" height="600"/>
+            <preferred-size width="-1" height="600"/>
+            <maximum-size width="-1" height="600"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="bevel-lowered" title-justification="2">
+          <font/>
+          <title-color color="-2104859"/>
+          <color color="-2104859"/>
+        </border>
+        <children>
+          <scrollpane id="defe0">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <minimum-size width="700" height="200"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="c61a9" class="javax.swing.JTable" binding="networksTable">
+                <constraints/>
+                <properties>
+                  <autoCreateColumnsFromModel value="true"/>
+                  <autoCreateRowSorter value="false"/>
+                  <autoResizeMode value="2"/>
+                  <font name="JetBrains Mono SemiBold" size="12" style="0"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+          <grid id="4a059" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="300"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="a6321" class="javax.swing.JTextArea" binding="channelRecommendationArea">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="50"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <font name="JetBrains Mono SemiBold" size="14"/>
+                  <margin top="5" left="5" bottom="5" right="5"/>
+                </properties>
+              </component>
+              <scrollpane id="2de75">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="be635" class="javax.swing.JTextArea" binding="detailsArea">
+                    <constraints/>
+                    <properties>
+                      <font name="JetBrains Mono SemiBold" size="14"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+          <grid id="e149d" binding="filterPanel" layout-manager="GridLayoutManager" row-count="2" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <maximum-size width="-1" height="60"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="47a6f" class="javax.swing.JTextField" binding="channelFilterField">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="16902" class="javax.swing.JTextField" binding="signalFilterField">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="c6eaa" class="javax.swing.JComboBox" binding="securityFilterComboBox">
+                <constraints>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <model>
+                    <item value="Все"/>
+                    <item value="WPA2-Personal"/>
+                    <item value="WPA"/>
+                    <item value="WEP"/>
+                    <item value="Открыть"/>
+                    <item value="WPA3-Personal"/>
+                    <item value="OWE"/>
+                  </model>
+                </properties>
+              </component>
+              <component id="eab4c" class="javax.swing.JButton" binding="applyFilterButton">
+                <constraints>
+                  <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="Button"/>
+                  <label value="Применить"/>
+                  <text value="Применить"/>
+                </properties>
+              </component>
+              <component id="95758" class="javax.swing.JButton" binding="resetFilterButton">
+                <constraints>
+                  <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <actionCommand value="Button"/>
+                  <label value="Отменить"/>
+                  <text value="Отменить"/>
+                </properties>
+              </component>
+              <component id="7cb72" class="javax.swing.JLabel" binding="channelFilterLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Канал"/>
+                </properties>
+              </component>
+              <component id="e5f84" class="javax.swing.JLabel" binding="signalFilterLabel">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Уровень сигнала"/>
+                </properties>
+              </component>
+              <component id="b54cf" class="javax.swing.JLabel" binding="securityFilterLabel">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Безопасность"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <component id="e71ea" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font name="JetBrains Mono ExtraBold" size="22" style="1"/>
+          <foreground color="-15698203"/>
+          <text value="Wi-FI Monitor"/>
+        </properties>
+      </component>
+      <grid id="3b78f" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="10" left="30" bottom="10" right="30"/>
+        <constraints>
+          <grid row="3" column="3" row-span="13" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="true"/>
+        </constraints>
+        <properties/>
+        <clientProperties>
+          <html.disable class="java.lang.Boolean" value="false"/>
+        </clientProperties>
+        <border type="bevel-lowered"/>
+        <children>
+          <component id="61cdf" class="javax.swing.JLabel" binding="ssidLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Сеть не выбрана"/>
+            </properties>
+          </component>
+          <component id="13391" class="javax.swing.JLabel" binding="signalLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Сеть не выбрана"/>
+            </properties>
+          </component>
+          <component id="991b3" class="javax.swing.JLabel" binding="securityLabel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Сеть не выбрана"/>
+            </properties>
+          </component>
+          <component id="48497" class="javax.swing.JLabel" binding="bssidLabel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Сеть не выбрана"/>
+            </properties>
+          </component>
+          <component id="3e1ff" class="javax.swing.JLabel" binding="channelLabel">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Сеть не выбрана"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="f7b68" binding="channelStatsPanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="3" column="4" row-span="13" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="bevel-lowered"/>
+        <children>
+          <component id="e0031" class="javax.swing.JLabel" binding="channelTotalValue">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="1d51f" class="javax.swing.JLabel" binding="channel24Value">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="b8b9e" class="javax.swing.JLabel" binding="channel5Value">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="f2f40" class="javax.swing.JLabel" binding="busiestChannelValue">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="64d3c" class="javax.swing.JLabel" binding="bestChannelValue">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+          <component id="eca02" class="javax.swing.JLabel" binding="avgNetworksValue">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <font name="JetBrains Mono SemiBold" size="16" style="1"/>
+              <text value="Label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <grid id="8e5c5" binding="graphContainerPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints>
+          <grid row="16" column="1" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="750" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </grid>
+      <grid id="2c2ee" binding="channelChartPanelContainer" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="16" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

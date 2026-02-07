@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="WifiInfo:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/WifiInfo_jar</output-path>
+    <root id="archive" name="WifiInfo.jar">
+      <element id="module-output" name="WifiInfo" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/postgresql/postgresql/42.5.4/postgresql-42.5.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.5.0/checker-qual-3.5.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
