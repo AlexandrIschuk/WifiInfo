@@ -8,18 +8,13 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.RowFilter;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.List;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.NumberTickUnit;
-import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -29,11 +24,13 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 
 public class TableMonitor extends JFrame {
     // Существующие поля
-    private DatabaseManager dbManager;
+    //private DatabaseManager dbManager;
     private JLabel ssidLabel;
     private JPanel mainPanel;
     private JLabel signalLabel;
@@ -60,6 +57,7 @@ public class TableMonitor extends JFrame {
     private ChartPanel channelChartPanel;
     private DefaultCategoryDataset channelDataset;
 
+    private JFreeChart overlapChart;
     private JButton applyFilterButton;
     private JButton resetFilterButton;
     private JPanel filterPanel;
@@ -76,8 +74,18 @@ public class TableMonitor extends JFrame {
     private JLabel channel5Value;
     private JLabel busiestChannelValue;
     private JLabel bestChannelValue;
-    private JLabel avgNetworksValue;
+    private JLabel bssidsCount;
     private JTextArea channelRecommendationArea;
+    private JLabel avgNetworksValue;
+    private JPanel channelPanel;
+    private JPanel channelPanel5;
+    private XYSeriesCollection overlapDataset24;
+    private XYSeriesCollection overlapDataset5;
+
+    private JFreeChart overlapChart24;
+    private JFreeChart overlapChart5;
+
+    private NativeWifiScanner scanner = new NativeWifiScanner();
 
     private ListSelectionListener selectionListener;
 
@@ -97,6 +105,8 @@ public class TableMonitor extends JFrame {
 
         // Инициализация компонентов анализа каналов (если они есть в форме)
         initChannelAnalysisComponents();
+
+        initOverlapChart();
     }
     private void initChannelAnalysisComponents() {
         // Проверяем, существуют ли компоненты в форме
@@ -105,6 +115,174 @@ public class TableMonitor extends JFrame {
         }
     }
 
+    private void initOverlapChart() {
+
+        overlapDataset24 = new XYSeriesCollection();
+        overlapDataset5 = new XYSeriesCollection();
+
+        overlapChart24 = ChartFactory.createXYLineChart(
+                "Перекрытие каналов Wi-Fi (2.4 GHz)",
+                "Канал",
+                "Сигнал",
+                overlapDataset24,
+                PlotOrientation.VERTICAL,
+                false,
+                true,
+                false
+        );
+
+        overlapChart5 = ChartFactory.createXYLineChart(
+                "Перекрытие каналов Wi-Fi (5 GHz)",
+                "Канал",
+                "Сигнал",
+                overlapDataset5,
+                PlotOrientation.VERTICAL,
+                false,
+                true,
+                false
+        );
+
+        configureOverlapChart(overlapChart24, 1, 13);
+        configureOverlapChart(overlapChart5, 30, 170);
+
+        ChartPanel panel24 = new ChartPanel(overlapChart24);
+        ChartPanel panel5 = new ChartPanel(overlapChart5);
+
+
+
+        channelPanel.setLayout(new BorderLayout());
+        channelPanel.add(panel24, BorderLayout.CENTER);
+        channelPanel5.setLayout(new BorderLayout());
+        channelPanel5.add(panel5, BorderLayout.CENTER);
+    }
+
+    private void configureOverlapChart(JFreeChart chart, int min, int max) {
+
+        XYPlot plot = chart.getXYPlot();
+
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+
+        NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
+        xAxis.setRange(min, max);
+        if (max > 20) {
+            xAxis.setTickUnit(new NumberTickUnit(4)); // 5 GHz
+            xAxis.setVerticalTickLabels(true);
+        } else {
+            xAxis.setTickUnit(new NumberTickUnit(1)); // 2.4 GHz
+        }
+
+        NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+        yAxis.setRange(0, 80);
+    }
+
+    private double wifiSpectrum(double x, int center, int rssi, int width) {
+
+        double sigma;
+
+        switch (width) {
+            case 40:
+                sigma = 4.0;
+                break;
+            case 80:
+                sigma = 8.0;
+                break;
+            default:
+                sigma = 2.0;
+        }
+
+        double power = rssi + 100;
+
+        return power * Math.exp(
+                -Math.pow(x - center, 2) / (2 * sigma * sigma)
+        );
+    }
+
+    private void updateOverlapGraph(List<NetworkInfo> networks) {
+
+        overlapDataset24.removeAllSeries();
+        overlapDataset5.removeAllSeries();
+
+        for (NetworkInfo net : networks) {
+
+            if (net.getChannel().isEmpty())
+                continue;
+
+            int channel;
+
+            try {
+                channel = Integer.parseInt(net.getChannel());
+            } catch (Exception e) {
+                continue;
+            }
+
+            int rssi;
+
+            try {
+                rssi = Integer.parseInt(net.getSignalStrength());
+            } catch (Exception e) {
+                continue;
+            }
+
+            XYSeries series = new XYSeries(net.getSsid());
+
+            double min = (channel <= 14) ? 1 : channel - 20;
+            double max = (channel <= 14) ? 13 : channel + 20;
+
+            for (double x = min; x <= max; x += 0.2) {
+
+                int width = 20;
+
+                if (net.getBand().contains("40"))
+                    width = 40;
+
+                if (net.getBand().contains("80"))
+                    width = 80;
+
+                double value = wifiSpectrum(x, channel, rssi, width);
+
+                if (value > 0.5)
+                    series.add(x, value);
+            }
+
+            if (channel <= 14) {
+                overlapDataset24.addSeries(series);
+            } else {
+                overlapDataset5.addSeries(series);
+            }
+        }
+
+        highlightSelected(overlapChart24, overlapDataset24);
+        highlightSelected(overlapChart5, overlapDataset5);
+    }
+
+    private void highlightSelected(JFreeChart chart, XYSeriesCollection dataset) {
+
+        XYPlot plot = chart.getXYPlot();
+
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true,false);
+        renderer.setDefaultShapesVisible(false);
+        renderer.setDrawSeriesLineAsPath(true);
+
+        for (int i = 0; i < dataset.getSeriesCount(); i++) {
+
+            String ssid = dataset.getSeriesKey(i).toString();
+
+            if (ssid.equals(currentlySelectedSsid)) {
+
+                renderer.setSeriesPaint(i, new Color(255,70,70));
+                renderer.setSeriesStroke(i, new BasicStroke(4f));
+
+            } else {
+
+                renderer.setSeriesPaint(i, new Color(120,120,120,90));
+                renderer.setSeriesStroke(i, new BasicStroke(1f));
+            }
+        }
+
+        plot.setRenderer(renderer);
+    }
 
     private void initChannelChart() {
         // Создаем dataset для гистограммы
@@ -129,8 +307,12 @@ public class TableMonitor extends JFrame {
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
 
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        CategoryAxis xAxis = plot.getDomainAxis();
         rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
         rangeAxis.setAutoRangeIncludesZero(true);
+        xAxis.setCategoryLabelPositions(
+                CategoryLabelPositions.UP_90
+        );
 
         // Опционально: устанавливаем шаг 1
         rangeAxis.setTickUnit(new NumberTickUnit(1));
@@ -277,7 +459,7 @@ public class TableMonitor extends JFrame {
     }
 
     private void setupTableAndFilters() {
-        String[] columnNames = {"SSID", "Сигнал (%)", "Канал", "Безопасность", "MAC-адрес"};
+        String[] columnNames = {"SSID", "Сигнал (dBm)", "Канал", "Безопасность", "MAC-адрес"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -445,7 +627,7 @@ public class TableMonitor extends JFrame {
         signalChart = ChartFactory.createTimeSeriesChart(
                 "График уровня сигнала Wi-Fi",
                 "Время",
-                "Уровень сигнала (%)",
+                "Уровень сигнала (dBm)",
                 dataset,
                 true,
                 true,
@@ -472,19 +654,11 @@ public class TableMonitor extends JFrame {
         domainAxis.setFixedAutoRange(60000.0);
 
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        rangeAxis.setRange(0.0, 100.0);
+        rangeAxis.setRange(-90.0, -10.0);
 
         // Создаем панель для графика
         chartPanel = new ChartPanel(signalChart);
         chartPanel.setPreferredSize(new Dimension(500, 300));
-        chartPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY),
-                "График уровня сигнала",
-                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                new Font("SansSerif", Font.BOLD, 12),
-                Color.BLUE
-        ));
 
         // Добавляем панель графика в интерфейс
         if (graphContainerPanel != null) {
@@ -499,7 +673,7 @@ public class TableMonitor extends JFrame {
             TableMonitor wf = new TableMonitor();
             wf.setContentPane(wf.mainPanel);
             wf.setTitle("Мониторинг беспроводных сетей");
-            wf.setSize(1800, 1200);
+            wf.setSize(2100, 1200);
             wf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             wf.setLocationRelativeTo(null);
 
@@ -511,10 +685,8 @@ public class TableMonitor extends JFrame {
     }
 
     private void setupTimer() {
-        refreshTimer = new Timer(500, e -> { // 2 секунды вместо 100 мс
+        refreshTimer = new Timer(1000, e -> { // 2 секунды вместо 100 мс
             try {
-                // Принудительное сканирование перед обновлением
-                new ProcessBuilder("netsh", "wlan", "scan","force=true").start().waitFor();
                 loadNetworks();
                 if (currentlySelectedSsid != null) {
                     analyzeSelectedNetwork();
@@ -529,46 +701,54 @@ public class TableMonitor extends JFrame {
     }
 
     private void loadNetworks() {
+
         new SwingWorker<List<String>, Void>() {
+
             @Override
-            protected List<String> doInBackground() throws Exception {
+            protected List<String> doInBackground() {
+
                 List<String> networks = scanAvailableNetworks();
-                channelAnalyzer.updateFromNetworks(new ArrayList<>(networkCache.values()));
+
+                channelAnalyzer.updateFromNetworks(
+                        new ArrayList<>(networkCache.values())
+                );
+
                 return networks;
             }
 
             @Override
             protected void done() {
+
                 try {
+
                     List<String> networks = get();
 
-                    // Получаем текущее выделение ДО обновления
                     int selectedViewRow = networksTable.getSelectedRow();
-                    String selectedSsid = null;
+
 
                     if (selectedViewRow >= 0) {
                         // Конвертируем индекс представления в индекс модели
                         int modelRow = networksTable.convertRowIndexToModel(selectedViewRow);
-                        selectedSsid = (String) tableModel.getValueAt(modelRow, 0);
+                        currentlySelectedSsid = (String) tableModel.getValueAt(modelRow, 0);
                     }
-
-                    // Обновляем таблицу БЕЗ полной очистки
                     updateTableModel();
 
-                    // Восстанавливаем выделение
-                    if (selectedSsid != null) {
-                        restoreSelection(selectedSsid);
-                    }
-
                     updateChannelAnalysis();
+
+                    updateOverlapGraph(new ArrayList<>(networkCache.values()));
+
                     updateNetworksCount();
 
+                    if (currentlySelectedSsid != null) {
+                        restoreSelection(currentlySelectedSsid);
+                    }
+
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(TableMonitor.this,
-                            "Ошибка сканирования: " + e.getMessage(),
-                            "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
                 }
+
             }
+
         }.execute();
     }
 
@@ -605,7 +785,7 @@ public class TableMonitor extends JFrame {
         String primaryBssid = info.getBssids().isEmpty() ? "" : info.getBssids().get(0);
         tableModel.addRow(new Object[]{
                 info.getSsid(),
-                info.getSignalStrength() + "%",
+                info.getSignalStrength(),
                 info.getChannel(),
                 info.getAuthentication(),
                 primaryBssid
@@ -616,7 +796,7 @@ public class TableMonitor extends JFrame {
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             if (info.getSsid().equals(tableModel.getValueAt(i, 0))) {
                 String primaryBssid = info.getBssids().isEmpty() ? "" : info.getBssids().get(0);
-                tableModel.setValueAt(info.getSignalStrength() + "%", i, 1);
+                tableModel.setValueAt(info.getSignalStrength(), i, 1);
                 tableModel.setValueAt(info.getChannel(), i, 2);
                 tableModel.setValueAt(info.getAuthentication(), i, 3);
                 tableModel.setValueAt(primaryBssid, i, 4);
@@ -653,82 +833,53 @@ public class TableMonitor extends JFrame {
         }
     }
 
-    private List<String> scanAvailableNetworks() throws IOException, InterruptedException {
+    private List<String> scanAvailableNetworks() {
+
         Map<String, NetworkInfo> newCache = new LinkedHashMap<>();
-        Process process = new ProcessBuilder("netsh", "wlan", "show", "networks", "mode=bssid").start();
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream(), "CP866"))) {
+        try {
+            List<NativeWifiScanner.WifiNetwork> nets = scanner.scan();
+            System.out.println("Networks found: " + nets.size());
+            for (NativeWifiScanner.WifiNetwork n : nets) {
+                System.out.println(
+                        n.ssid + " | " +
+                                n.bssids.get(0) + " | " +
+                                n.rssi + " dBm | ch " +
+                                n.channel
+                );
+                if (n.ssid == null || n.ssid.isEmpty())
+                    continue;
 
-            String currentSsid = null;
-            NetworkInfo currentInfo = null;
-            String line;
+                NetworkInfo info = new NetworkInfo(n.ssid);
 
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
+                info.setSignalStrength(String.valueOf(n.rssi));
 
-                if (line.startsWith("SSID") && line.contains(":")) {
-                    if (currentSsid != null && currentInfo != null) {
-                        newCache.put(currentSsid, currentInfo);
-                    }
-                    String[] parts = line.split(":", 2);
-                    currentSsid = parts.length > 1 ? parts[1].trim() : "";
-                    if (!currentSsid.isEmpty()) {
-                        currentInfo = new NetworkInfo(currentSsid);
-                    }
-                }
-                else if (currentSsid != null && currentInfo != null) {
-                    if (line.startsWith("BSSID")  && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.addBssid(parts[1].trim().toUpperCase());
-                    }
-                    else if ((line.startsWith("Сигнал") || line.startsWith("Signal")) && line.contains(":")) {
-                        String[] parts = line.split(":");
-                        if (parts.length > 1) {
-                            String signalStr = parts[1].replace("%", "").trim();
-                            currentInfo.setSignalStrength(signalStr);
-                        }
-                    }
-                    else if ((line.startsWith("Проверка") || line.startsWith("Authentication")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setAuthentication(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Шифр") || line.startsWith("Cipher")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setCipher(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Канал") || line.startsWith("Channel")) && line.contains(":")) {
-                        String[] parts = line.split(":");
-                        if (parts.length > 1) currentInfo.setChannel(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Тип радио") || line.startsWith("Radio type")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setRadioType(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Диапазон") || line.startsWith("Band")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setBand(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Базовая скорость") || line.startsWith("Basic rates")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setBasicRates(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Другие скорости") || line.startsWith("Other rates")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setOtherRates(parts[1].trim());
-                    }
-                    else if ((line.startsWith("Тип сети") || line.startsWith("Network type")) && line.contains(":")) {
-                        String[] parts = line.split(":", 2);
-                        if (parts.length > 1) currentInfo.setNetworkType(parts[1].trim());
-                    }
-                }
+                info.setChannel(String.valueOf(n.channel));
+
+                info.setRadioType(n.phy);
+
+                info.setBand(n.band);
+
+                info.setAuthentication(n.security);
+
+                info.addBssid(n.bssids);
+
+                info.setBasicRates(String.valueOf(n.maxRate));
+                info.setChannelWidth(String.valueOf(n.channelWidth));
+                info.setVersion(n.wifiGeneration);
+                info.setFrequency(String.valueOf(n.frequency/1000000));
+                info.setCipher(n.cipher);
+
+                newCache.put(n.ssid, info);
             }
-            if (currentSsid != null && currentInfo != null) {
-                newCache.put(currentSsid, currentInfo);
-            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         networkCache = newCache;
-        return null;
+
+        return new ArrayList<>(newCache.keySet());
     }
 
     private void analyzeSelectedNetwork() {
@@ -743,9 +894,9 @@ public class TableMonitor extends JFrame {
                 try {
                     int percent = Integer.parseInt(info.getSignalStrength());
                     int dbm = (percent / 2) - 100;
-                    if (signalLabel != null) signalLabel.setText(String.format("Сигнал: %d%% (~%d dBm)", percent, dbm));
+                    if (signalLabel != null) signalLabel.setText(String.format("Сигнал: %d dBm ", percent));
                 } catch (NumberFormatException e) {
-                    if (signalLabel != null) signalLabel.setText("Сигнал: " + info.getSignalStrength() + "%");
+                    if (signalLabel != null) signalLabel.setText("Сигнал: " + info.getSignalStrength());
                 }
             } else {
                 if (signalLabel != null) signalLabel.setText("Сигнал: -");
@@ -756,6 +907,8 @@ public class TableMonitor extends JFrame {
                     (info.getBssids().isEmpty() ? "-" : info.getBssids().get(0)));
             if (channelLabel != null) channelLabel.setText("Канал: " +
                     (info.getChannel().isEmpty() ? "-" : info.getChannel()));
+            if (bssidsCount != null) bssidsCount.setText("Точек доступа: " +
+                    (info.getBssids().isEmpty() ? "-" : info.getBssids().size()));
             if (detailsArea != null) detailsArea.setText(info.getDetailedInfo());
 
             if (detailsArea != null) {
@@ -774,13 +927,13 @@ public class TableMonitor extends JFrame {
 
                             // Рекомендация
                             if (channelInfo.getNetworkCount() == 0) {
-                                details += "✅ Канал свободен\n";
+                                details += "Канал свободен\n";
                             } else if (channelInfo.getNetworkCount() < 3) {
-                                details += "🟡 Канал слабо загружен\n";
+                                details += "Канал слабо загружен\n";
                             } else if (channelInfo.getNetworkCount() < 6) {
-                                details += "🟠 Канал умеренно загружен\n";
+                                details += "Канал умеренно загружен\n";
                             } else {
-                                details += "🔴 Канал сильно загружен\n";
+                                details += "Канал сильно загружен\n";
                             }
                         }
                     } catch (NumberFormatException e) {
@@ -828,17 +981,6 @@ public class TableMonitor extends JFrame {
         }
     }
 
-    private String getBandInfo(int channel) {
-        if (channel <= 14) {
-            return "2.4GHz (стандартный диапазон)";
-        } else if (channel <= 64) {
-            return "5GHz (UNII-1)";
-        } else if (channel <= 140) {
-            return "5GHz (UNII-2)";
-        } else {
-            return "5GHz (UNII-3)";
-        }
-    }
 
     @Override
     public void dispose() {

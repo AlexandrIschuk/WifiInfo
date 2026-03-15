@@ -1,3 +1,4 @@
+/*
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class DatabaseManager {
             ps.setString(1, info.getSsid());
             ps.setString(2, info.getAuthentication());
             ps.setString(3, info.getBand());
-            ps.setString(4, info.getNetworkType());
+
             ps.executeUpdate();
         }
 
@@ -97,4 +98,4 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
-}
+}*/
