@@ -103,7 +103,6 @@ public class TableMonitor extends JFrame {
         setSize(2100, 1200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setupReportMenu();
         setupReportButtons();
         applyModernPanelStyles();
         selectionManager.bssidsListener();
@@ -334,25 +333,7 @@ public class TableMonitor extends JFrame {
                 selectionManager.getSelectedSsid(), selectionManager.getSelectedBssid());
     }
 
-    private void setupReportMenu() {
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
 
-        JMenu reportMenu = new JMenu("Отчет");
-        reportMenu.setFont(new Font("Segoe UI", Font.BOLD, 13));
-
-        startReportMenuItem = new JMenuItem("Начать запись");
-        startReportMenuItem.addActionListener(e -> startReportRecording());
-
-        stopReportMenuItem = new JMenuItem("Стоп и создать отчет");
-        stopReportMenuItem.addActionListener(e -> stopAndCreateReport());
-        stopReportMenuItem.setEnabled(false);
-
-        reportMenu.add(startReportMenuItem);
-        reportMenu.add(stopReportMenuItem);
-        menuBar.add(reportMenu);
-        setJMenuBar(menuBar);
-    }
 
     private void setupReportButtons() {
         if (recordingPanel == null) {
