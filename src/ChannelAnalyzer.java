@@ -1,77 +1,67 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChannelAnalyzer {
-    private Map<Integer, ChannelInfo> channelStats = new HashMap<>();
+    private Map<Integer, ChannelInfo> channelStats;
 
-    public void updateFromNetworks(List<NetworkInfo> networks) {
-        // Группировка сетей по каналам
-        Map<Integer, List<NetworkInfo>> networksByChannel = new HashMap<>();
-
-        for (NetworkInfo network : networks) {
-            try {
-                String channelStr = network.getChannel();
-                if (channelStr != null && !channelStr.isEmpty()) {
-                    int channel = Integer.parseInt(channelStr);
-                    networksByChannel.computeIfAbsent(channel, k -> new ArrayList<>())
-                            .add(network);
-                }
-            } catch (NumberFormatException e) {
-                // Пропускаем сети без канала
-            }
-        }
-
-        // Обновление статистики для каждого канала
-        for (Map.Entry<Integer, List<NetworkInfo>> entry : networksByChannel.entrySet()) {
-            updateChannelStats(entry.getKey(), entry.getValue());
-        }
-
-        // Обновление каналов без сетей
-        for (int channel : getAllPossibleChannels()) {
-            if (!networksByChannel.containsKey(channel)) {
-                ChannelInfo info = channelStats.getOrDefault(channel, new ChannelInfo(channel));
-                info.setNetworkCount(0);
-                info.setAverageSignal(0);
-                info.setLastUpdated(new Date());
-                channelStats.put(channel, info);
-            }
-        }
+    public ChannelAnalyzer() {
+        this.channelStats = new HashMap<>();
     }
 
-    private void updateChannelStats(int channel, List<NetworkInfo> networks) {
-        ChannelInfo info = channelStats.getOrDefault(channel, new ChannelInfo(channel));
-        info.setNetworkCount(networks.size());
-
-        // Расчет среднего сигнала
-        double totalSignal = 0;
-        int countWithSignal = 0;
+    public void updateFromNetworks(List<NetworkInfo> networks) {
+        channelStats.clear();
 
         for (NetworkInfo network : networks) {
+            if (network.getChannel().isEmpty()) continue;
+
             try {
+                int channel = Integer.parseInt(network.getChannel());
                 int signal = Integer.parseInt(network.getSignalStrength());
-                totalSignal += signal;
-                countWithSignal++;
+
+                // Получаем или создаём информацию о канале
+                ChannelInfo info = channelStats.computeIfAbsent(channel,
+                        k -> new ChannelInfo(channel));
+
+                // Добавляем сеть на этот канал (только один раз)
+                info.addNetwork(signal);
+
             } catch (NumberFormatException e) {
-                // Пропускаем
+                // Skip invalid data
             }
         }
-
-        info.setAverageSignal(countWithSignal > 0 ? totalSignal / countWithSignal : 0);
-        info.setLastUpdated(new Date());
-        channelStats.put(channel, info);
     }
 
     public Map<Integer, ChannelInfo> getChannelStats() {
-        return new HashMap<>(channelStats);
+        // Сортируем каналы по возрастанию
+        Map<Integer, ChannelInfo> sortedStats = new TreeMap<>(channelStats);
+        return Collections.unmodifiableMap(sortedStats);
     }
 
-    private List<Integer> getAllPossibleChannels() {
-        List<Integer> channels = new ArrayList<>();
-        // 2.4GHz каналы
-        for (int i = 1; i <= 14; i++) channels.add(i);
-        // Основные 5GHz каналы
-        int[] channels5GHz = {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112,
-                116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165};
-        for (int channel : channels5GHz) channels.add(channel);
-        return channels;
+    public ChannelStatistics getStatistics() {
+        return new ChannelStatistics(channelStats);
+    }
+
+    // Получить список каналов, отсортированных по загрузке (от лучшего к худшему)
+    public List<Integer> getRecommendedChannels() {
+        return channelStats.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> e.getValue().getUtilizationScore()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    // Получить только 2.4 GHz каналы
+    public List<Integer> getChannels24() {
+        return channelStats.keySet().stream()
+                .filter(ch -> ch <= 14)
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    // Получить только 5 GHz каналы
+    public List<Integer> getChannels5() {
+        return channelStats.keySet().stream()
+                .filter(ch -> ch > 14)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

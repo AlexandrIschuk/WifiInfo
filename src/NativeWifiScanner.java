@@ -2,6 +2,8 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class NativeWifiScanner {
@@ -12,7 +14,7 @@ public class NativeWifiScanner {
         public String security;
         public String band;
 
-        public ArrayList<String> bssids = new ArrayList<>();
+        public ArrayList<Bssids> bssids = new ArrayList<>();
 
         public int rssi;
         public double frequency;
@@ -24,7 +26,27 @@ public class NativeWifiScanner {
         public int channelWidth;
         public String wifiGeneration;
         public String cipher;
+        public String connectedSsid;
+
+        public static class Bssids{
+
+            public String bssid;
+            public int rssi;
+
+            public int channel;
+            public double frequency;
+
+            public int channelWidth;
+
+            public String band;
+
+            public String phyType;
+
+            public String security;
+
+        }
     }
+
 
     public List<WifiNetwork> scan() throws Exception {
 
@@ -82,7 +104,7 @@ public class NativeWifiScanner {
                             continue;
 
                         WifiNetwork net = networks.get(ssid);
-
+                        byte[] ieData = new byte[0];
                         if (net == null) {
 
                             net = new WifiNetwork();
@@ -91,26 +113,31 @@ public class NativeWifiScanner {
                             Pointer entryPtr = e.getPointer();
                             Pointer iePtr = entryPtr.share(e.ulIeOffset);
 
-                            byte[] ieData = iePtr.getByteArray(0, e.ulIeSize);
+                            ieData = iePtr.getByteArray(0, e.ulIeSize);
 
                             net.security = SecurityParser.parseSecurity(ieData);
                             net.cipher = SecurityParser.parseCipher(ieData);
 
                             net.rssi = e.lRssi;
                             net.frequency = e.ulChCenterFrequency;
-
+                            net.channelWidth = getChannelWidth(ieData);
                             net.channel = freqToChannel(e.ulChCenterFrequency);
+                            //net.channel = freqToChannel(e.ulChCenterFrequency);
                             net.band = getBand(e.ulChCenterFrequency);
 
                             net.phy = phyToString(e.dot11BssPhyType);
                             net.maxRate = getMaxRate(e.wlanRateSet);
                             net.wifiGeneration = wifiGeneration(e.dot11BssPhyType);
-                            net.channelWidth = getChannelWidth(ieData);
+
+                            net.connectedSsid = getConnectedSSID();
+
 
                             networks.put(ssid, net);
                         }
 
-                        String bssid = String.format(
+                        WifiNetwork.Bssids ap = new WifiNetwork.Bssids();
+
+                        ap.bssid = String.format(
                                 "%02X:%02X:%02X:%02X:%02X:%02X",
                                 e.dot11Bssid[0],
                                 e.dot11Bssid[1],
@@ -120,8 +147,31 @@ public class NativeWifiScanner {
                                 e.dot11Bssid[5]
                         );
 
-                        if (!net.bssids.contains(bssid)) {
-                            net.bssids.add(bssid);
+                        ap.rssi = e.lRssi;
+
+                        ap.frequency = e.ulChCenterFrequency;
+
+                        ap.channel = freqToChannel(e.ulChCenterFrequency);
+
+                        ap.band = getBand(e.ulChCenterFrequency);
+
+                        ap.phyType = phyToString(e.dot11BssPhyType);
+
+                        ap.security = net.security;
+
+                        ap.channelWidth = getChannelWidth(ieData);
+
+                        boolean exists = false;
+
+                        for (WifiNetwork.Bssids b : net.bssids) {
+                            if (b.bssid.equals(ap.bssid)) {
+                                exists = true;
+                                break;
+                            }
+                        }
+
+                        if (!exists) {
+                            net.bssids.add(ap);
                         }
 
                         if (e.lRssi > net.rssi) {
@@ -149,6 +199,8 @@ public class NativeWifiScanner {
         return new ArrayList<>(networks.values());
     }
 
+
+
     private double getMaxRate(WifiScanner.WLAN_RATE_SET rateSet) {
 
         int max = 0;
@@ -162,6 +214,89 @@ public class NativeWifiScanner {
         }
 
         return max * 0.5;
+    }
+    private int getSecondaryChannel(int primary, byte[] ieData) {
+
+        int i = 0;
+
+        while (i < ieData.length - 2) {
+
+            int id = ieData[i] & 0xFF;
+            int len = ieData[i + 1] & 0xFF;
+
+            // HT Operation (802.11n)
+            if (id == 61 && len >= 2) {
+
+                int offset = ieData[i + 2] & 0x03;
+
+                if (offset == 1) { // above
+                    return primary + 4;
+                } else if (offset == 3) { // below
+                    return primary - 4;
+                }
+            }
+
+            i += 2 + len;
+        }
+
+        return -1;
+    }
+
+    private String buildChannelDisplay(int primary, int width, byte[] ieData) {
+
+        if (width <= 20) {
+            return String.valueOf(primary);
+        }
+
+        // Попробуем определить направление (выше или ниже)
+        int secondary = getSecondaryChannel(primary, ieData);
+
+        if (width == 40) {
+
+            if (secondary != -1)
+                return primary + " + " + secondary;
+
+            // fallback
+            return primary + " + " + (primary + 4);
+        }
+
+        if (width == 80) {
+            return primary + " + " + (primary + 4) + " + " + (primary + 8) + " + " + (primary + 12);
+        }
+
+        if (width == 160) {
+            return primary + " + ..."; // можно позже расширить
+        }
+
+        return String.valueOf(primary);
+    }
+
+    public String getConnectedSSID() {
+
+        try {
+
+            Process p = Runtime.getRuntime().exec("netsh wlan show interfaces");
+
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+
+                if (line.trim().startsWith("SSID")) {
+
+                    if (!line.contains("BSSID")) {
+                        return line.split(":")[1].trim();
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private int freqToChannel(int freq) {
@@ -194,36 +329,63 @@ public class NativeWifiScanner {
             default: return "unknown";
         }
     }
-    private int getChannelWidth(byte[] ie) {
+    private int getChannelWidth(byte[] ieData) {
+        int width = 20;
+        int maxSupported = 20;
 
-        for(int i=0;i<ie.length-2;i++) {
+        int i = 0;
+        while (i < ieData.length - 2) {
+            int id = ieData[i] & 0xFF;
+            int len = ieData[i + 1] & 0xFF;
 
-            int id = ie[i] & 0xFF;
-            int len = ie[i+1] & 0xFF;
+            // HT Operation
+            if (id == 61 && len >= 2) {
+                int htInfo = ieData[i + 2] & 0xFF;
+                int secondaryOffset = htInfo & 0x03;
 
-            if(id == 192) { // VHT Operation
-
-                int width = ie[i+2] & 0xFF;
-
-                if(width == 0) return 20;
-                if(width == 1) return 80;
-                if(width == 2) return 160;
+                if (secondaryOffset == 1 || secondaryOffset == 2) {
+                    width = 40;
+                }
             }
 
-            if(id == 61) { // HT Operation
+            // VHT Operation
+            if (id == 192 && len >= 3) {
+                int channelWidth = ieData[i + 2] & 0xFF;
 
-                int htInfo = ie[i+2] & 0xFF;
-
-                if((htInfo & 0x04) != 0)
-                    return 40;
-                else
-                    return 20;
+                switch (channelWidth) {
+                    case 1: // 80 МГц
+                        width = 80;
+                        break;
+                    case 2: // 160 МГц
+                    case 3: // 80+80 МГц
+                        width = 160;
+                        break;
+                    // case 0: 20/40 - оставляем текущее значение
+                }
             }
 
-            i += len + 1;
+            // HE Operation
+            if (id == 255 && len >= 1) {
+                int extId = ieData[i + 2] & 0xFF;
+
+                if (extId == 36 && len >= 6) {
+                    int heInfo = ieData[i + 3] & 0xFF;
+                    int heWidth = (heInfo >> 2) & 0x03;
+
+                    switch (heWidth) {
+                        case 1: width = 40; break;
+                        case 2: width = 80; break;
+                        case 3: width = 160; break;
+                        // case 0: 20 - оставляем
+                    }
+                }
+            }
+
+            i += 2 + len;
         }
 
-        return 20;
+
+        return width;
     }
     private String wifiGeneration(int phy) {
 
