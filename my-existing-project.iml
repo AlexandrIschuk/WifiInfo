@@ -3,6 +3,7 @@
   <component name="AdditionalModuleElements">
     <content url="file://$MODULE_DIR$" dumb="true">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/${project.build.directory}" />
       <excludeFolder url="file://$MODULE_DIR$/my-custom-jre/bin" />
       <excludeFolder url="file://$MODULE_DIR$/my-custom-jre1/bin" />
     </content>

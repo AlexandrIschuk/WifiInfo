@@ -6,6 +6,7 @@ out/
 /my-custom-jre1/
 /installer/
 /target/
+/${project.build.directory}/
 
 ### Eclipse ###
 .apt_generated
@@ -31,3 +32,4 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/${project.build.directory}/
