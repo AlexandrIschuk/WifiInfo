@@ -1022,7 +1022,7 @@ public class TableMonitor extends JFrame {
         tabbedPane2.addTab("График уровня сигнала", graphContainerPanel);
         channelChartPanelContainer = new JPanel();
         channelChartPanelContainer.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        tabbedPane2.addTab("График загрузки каналов", channelChartPanelContainer);
+        tabbedPane2.addTab("Диаграмма загрузки каналов", channelChartPanelContainer);
         connectButton = new JButton();
         connectButton.setText("Подключиться");
         panel6.add(connectButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));

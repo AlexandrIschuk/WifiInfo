@@ -44,7 +44,7 @@ public class ChartManager {
     private static final Color SELECTED_SERIES = new Color(255, 92, 92);
     private static final Color CONNECTED_SERIES = new Color(20, 168, 107);
     private static final Color OTHER_SERIES = new Color(140, 150, 165, 90);
-    private static final int MAX_DATA_POINTS = 60;
+    private static final int MAX_DATA_POINTS = 120;
 
     private JPanel graphContainer;
     private JPanel channelPanel24;
@@ -152,7 +152,7 @@ public class ChartManager {
 
         ValueAxis domainAxis = plot.getDomainAxis();
         domainAxis.setAutoRange(true);
-        domainAxis.setFixedAutoRange(60000.0);
+        domainAxis.setFixedAutoRange(120000.0);
         styleAxis(domainAxis);
 
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();

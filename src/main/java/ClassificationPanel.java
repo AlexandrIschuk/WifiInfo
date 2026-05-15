@@ -2,6 +2,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.Map;
 
 public class ClassificationPanel extends JPanel {
@@ -55,6 +57,7 @@ public class ClassificationPanel extends JPanel {
             }
         };
 
+
         classificationTable = new JTable(tableModel);
         classificationTable.setRowHeight(30);
         classificationTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -62,6 +65,28 @@ public class ClassificationPanel extends JPanel {
         classificationTable.setShowGrid(true);
         classificationTable.setGridColor(new Color(230, 235, 240));
         classificationTable.setSelectionBackground(new Color(235, 245, 255));
+        classificationTable.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int row = classificationTable.rowAtPoint(e.getPoint());
+                int column = classificationTable.columnAtPoint(e.getPoint());
+
+                if (row >= 0 && column == 4) {  // колонка "Обоснование" (индекс 4)
+                    Object value = classificationTable.getValueAt(row, column);
+                    if (value != null && !value.toString().isEmpty()) {
+                        // Оборачиваем в HTML для переноса строк
+                        String tooltip = "<html><div style='width:350px;padding:5px;'>"
+                                + value.toString().replace("\n", "<br>")
+                                + "</div></html>";
+                        classificationTable.setToolTipText(tooltip);
+                    } else {
+                        classificationTable.setToolTipText(null);
+                    }
+                } else {
+                    classificationTable.setToolTipText(null);
+                }
+            }
+        });
 
         classificationTable.setDefaultRenderer(Object.class,
                 new ClassificationTableCellRenderer());

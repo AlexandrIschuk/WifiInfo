@@ -60,7 +60,6 @@ public class NativeWifiScanner {
         }
     }
 
-
     public List<WifiNetwork> scan() throws Exception {
 
         Map<String, WifiNetwork> networks = new LinkedHashMap<>();
@@ -78,7 +77,6 @@ public class NativeWifiScanner {
         Pointer handle = handleRef.getValue();
 
         try {
-
             PointerByReference ifaceRef = new PointerByReference();
 
             WifiScanner.WlanApi.INSTANCE.WlanEnumInterfaces(
@@ -86,10 +84,8 @@ public class NativeWifiScanner {
                     null,
                     ifaceRef
             );
-
             WifiScanner.WLAN_INTERFACE_INFO_LIST list =
                     new WifiScanner.WLAN_INTERFACE_INFO_LIST(ifaceRef.getValue());
-
             for (WifiScanner.WLAN_INTERFACE_INFO iface : list.getInterfaces()) {
                 int scanResult = WifiScanner.WlanApi.INSTANCE.WlanScan(
                         handle,
@@ -98,7 +94,6 @@ public class NativeWifiScanner {
                         null,
                         null
                 );
-
                 if (scanResult != 0) {
                     System.err.println("WlanScan failed with error: " + scanResult);
                 } else {
@@ -108,9 +103,7 @@ public class NativeWifiScanner {
                         Thread.currentThread().interrupt();
                     }
                 }
-
                 PointerByReference bssRef = new PointerByReference();
-
                 WifiScanner.WlanApi.INSTANCE.WlanGetNetworkBssList(
                         handle,
                         iface.InterfaceGuid,
@@ -120,12 +113,9 @@ public class NativeWifiScanner {
                         null,
                         bssRef
                 );
-
                 try {
-
                     WifiScanner.WLAN_BSS_LIST bssList =
                             new WifiScanner.WLAN_BSS_LIST(bssRef.getValue());
-
                     for (WifiScanner.WLAN_BSS_ENTRY e : bssList.getEntries()) {
 
                         String ssid = e.dot11Ssid.getSSID();
@@ -188,15 +178,10 @@ public class NativeWifiScanner {
                         );
 
                         ap.rssi = e.lRssi;
-
                         ap.frequency = e.ulChCenterFrequency;
-
                         ap.channel = freqToChannel(e.ulChCenterFrequency);
-
                         ap.band = getBand(e.ulChCenterFrequency);
-
                         ap.phyType = phyToString(ieData, e.dot11BssPhyType, e.ulChCenterFrequency);
-
                         ap.security = net.security;
 
                         ap.channelWidth = getChannelWidth(ieData, e.ulChCenterFrequency);
@@ -245,8 +230,6 @@ public class NativeWifiScanner {
         return new ArrayList<>(networks.values());
     }
 
-
-
     private double getMaxRate(WifiScanner.WLAN_RATE_SET rateSet) {
 
         int max = 0;
@@ -261,9 +244,6 @@ public class NativeWifiScanner {
 
         return max * 0.5;
     }
-
-
-
 
     public String getConnectedSSID() {
 
@@ -389,7 +369,6 @@ public class NativeWifiScanner {
                 } else {
                     width = 20;
                 }
-
 
                 boolean supports40MHz = ((htInfo1 >> 2) & 0x01) == 1;
             }

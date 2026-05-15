@@ -6,6 +6,7 @@ NetworkTableManager$3.class
 NetworkClassifier.class
 WifiScanner$WLAN_CONNECTION_PARAMETERS.class
 HtmlReportRecorder$SnapshotValueExtractor.class
+ClassificationPanel$2.class
 HtmlReportRecorder.class
 TableMonitor.class
 TableSelectionListener.class
