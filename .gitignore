@@ -5,6 +5,7 @@ out/
 /my-custom-jre/
 /my-custom-jre1/
 /installer/
+/target/
 
 ### Eclipse ###
 .apt_generated
